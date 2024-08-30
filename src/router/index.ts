@@ -3,9 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { setupPageGuard } from './permission'
 import { ChatLayout } from '@/views/chat/layout'
-import mjlayout from '@/views/mj/layout.vue'
-import sunoLayout from '@/views/suno/layout.vue'
-import lumaLayout from '@/views/luma/layout.vue'
+import { useAuthStore } from '@/store/auth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -13,6 +11,7 @@ const routes: RouteRecordRaw[] = [
     name: 'Root',
     component: ChatLayout,
     redirect: '/chat',
+    meta: { requiresAuth: true },
     children: [
       {
         path: '/chat/:uuid?',
@@ -21,11 +20,12 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
-   {
+  {
     path: '/g',
     name: 'g',
     component: ChatLayout,
     redirect: '/g/g-2fkFE8rbu',
+    meta: { requiresAuth: true },
     children: [
       {
         path: '/g/:gid',
@@ -34,11 +34,12 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
-   {
+  {
     path: '/m',
     name: 'm',
     component: ChatLayout,
     redirect: '/m/gpt-3.5-turbo',
+    meta: { requiresAuth: true },
     children: [
       {
         path: '/m/:gid',
@@ -52,6 +53,7 @@ const routes: RouteRecordRaw[] = [
     name: 's',
     component: ChatLayout,
     redirect: '/s/t',
+    meta: { requiresAuth: true },
     children: [
       {
         path: '/s/t',
@@ -60,101 +62,39 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
-
-
   {
-    path: '/draw',
-    name: 'Rootdraw',
-    component: mjlayout,
-    redirect: '/draw/index',
-    children: [
-      {
-        path: '/draw/:uuid?',
-        name: 'draw',
-        component: () => import('@/views/mj/draw.vue'),
-      },
-    ],
-  },
-
-    {
-    path: '/music',
-    name: 'music',
-    component: sunoLayout,
-    redirect: '/music/index',
-    children: [
-      {
-        path: '/music/:uuid?',
-        name: 'music',
-        component: () => import('@/views/suno/music.vue'),
-      },
-    ],
-
-    
-
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/auth/Login.vue'),
+    meta: { requiresGuest: true }
   },
   {
-    path: '/video',
-    name: 'video',
-    component: lumaLayout,
-    redirect: '/video/index',
-    children: [
-      {
-        path: '/video/:uuid?',
-        name: 'video',
-        component: () => import('@/views/luma/video.vue'),
-      },
-    ],
-  },
-
-  {
-    path: '/dance',
-    name: 'dance',
-    component: lumaLayout,
-    redirect: '/dance/index',
-    children: [
-      {
-        path: '/dance/:uuid?',
-        name: 'dance',
-        component: () => import('@/views/viggle/dance.vue'),
-      },
-    ],
-  },
-
-  //调试
-  // {
-  //   path: '/mytest',
-  //   name: 'mytest',
-  //   component: () => import('@/views/mj/myTest.vue'),
-  // },
-
-  {
-    path: '/404',
-    name: '404',
-    component: () => import('@/views/exception/404/index.vue'),
-  },
-
-  {
-    path: '/500',
-    name: '500',
-    component: () => import('@/views/exception/500/index.vue'),
-  },
-
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'notFound',
-    redirect: '/404',
-  },
+    path: '/signup',
+    name: 'Signup',
+    component: () => import('@/views/auth/Signup.vue'),
+    meta: { requiresGuest: true }
+  }
 ]
 
 export const router = createRouter({
   history: createWebHashHistory(),
   routes,
-  scrollBehavior: () => ({ left: 0, top: 0 }),
 })
 
-setupPageGuard(router)
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore()
+  
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next('/login')
+  } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    next('/')
+  } else {
+    next()
+  }
+})
 
 export async function setupRouter(app: App) {
   app.use(router)
+  setupPageGuard(router)
   await router.isReady()
 }

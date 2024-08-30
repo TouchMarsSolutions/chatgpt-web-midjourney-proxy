@@ -60,6 +60,13 @@ const getContainerClass = computed(() => {
     { 'abc': !isMobile.value && !collapsed.value },
   ]
 }) 
+
+const { isAuthenticated } = storeToRefs(authStore)
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -76,6 +83,13 @@ const getContainerClass = computed(() => {
       </NLayout>
     </div>
     <Permission :visible="needPermission" />
+    <div v-if="isAuthenticated">
+      <NButton @click="handleLogout">Logout</NButton>
+    </div>
+    <div v-else>
+      <NButton @click="$router.push('/login')">Login</NButton>
+      <NButton @click="$router.push('/signup')">Sign Up</NButton>
+    </div>
   </div>
    <aiMobileMenu v-if="isMobile"   /> 
 
